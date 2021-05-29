@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/smtpd
+smtpd.so
+smtpd.dylib
+smtpd.dll
+smtpd.a
+smtpd.lib
+smtpd-test-*
+*.exe
+*.o
+*.obj
+*.lst

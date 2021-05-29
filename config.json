@@ -1,0 +1,6 @@
+{
+	"forward":"http://localhost/maildump.php",
+	"host":"mail.example.com",
+	"bind":"0.0.0.0",
+	"port":25
+}
