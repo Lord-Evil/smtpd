@@ -1,16 +1,19 @@
 import std.stdio;
 import vibe.inet.message;
 import vibe.stream.memory;
+import vibe.inet.message: decodeMessage, decodeEmailAddressHeader;
 import vibe.data.json;
 import std.string;
 import std.array;
+
+import headerParser;
 
 Json parseMail(string email)
 {
 	email=email.replace('\r',"");
 	ubyte[] hdr = cast(ubyte[])email.dup;
 	InetHeaderMap map;
-	parseRFC5322Header(createMemoryStream(hdr), map);
+	parseHeader(createMemoryStream(hdr), map, true);
 	Json result = Json.emptyObject;
 	Json headers = Json.emptyObject;
 
@@ -35,7 +38,7 @@ Json parseMail(string email)
 	//writeln(headers);
 	if(headers["content-type"].type!=Json.Type.undefined){
 		if(headers["content-type"]["type"]=="text/plain"){
-			string body = parseBody(email);
+			string body = parseBody(email, true);
 			result["body"]=body;
 			if(headers["content-transfer-encoding"].type!=Json.Type.undefined){
 				result["body"] = decodeBody(body, headers["content-transfer-encoding"].get!string);
@@ -53,7 +56,7 @@ Json parseMail(string email)
 					Json part = Json.emptyObject;
 					ubyte[] parthdr = cast(ubyte[])contentParts[i].dup;
 					InetHeaderMap partmap;
-					parseRFC5322Header(createMemoryStream(parthdr), partmap);
+					parseHeader(createMemoryStream(parthdr), partmap);
 					//writeln(partmap);
 					foreach(string key, string val; partmap.byKeyValue){
 						key=key.toLower();
@@ -120,21 +123,28 @@ Json parseContentType(string val){
 	return contentType;
 }
 
-string parseBody(string data){
-	bool newLine = false;
-	for(int i; i<data.length; i++){
-		if(data[i]=='\n'){
-			if(newLine){
-				return data[i..$].strip;
+string parseBody(string data, bool text=false){
+	if(!text){
+		bool newLine = false;
+		for(int i; i<data.length; i++){
+			if(data[i]=='\n'){
+				if(newLine){
+					return data[i..$].strip;
+				}else{
+					newLine = true;
+				}
 			}else{
-				newLine = true;
+				newLine = false;
 			}
-		}else{
-			newLine = false;
 		}
+	}else{
+		long idx = data.indexOf("Content-Type");
+		idx = data.indexOf("\n", idx);
+		return data[idx+1..$].strip;
 	}
 	return "";
 }
+
 
 string[] parseMultipart(string data, string boundary){
 	string[] parts;
