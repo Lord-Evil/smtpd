@@ -13,3 +13,4 @@ smtpd-test-*
 *.o
 *.obj
 *.lst
+config.json
