@@ -11,6 +11,7 @@ import headerParser;
 Json parseMail(string email)
 {
 	email=email.replace('\r',"");
+	writeln("\n----------\n"~email~"\n----------\n");
 	ubyte[] hdr = cast(ubyte[])email.dup;
 	InetHeaderMap map;
 	parseHeader(createMemoryStream(hdr), map, true);
