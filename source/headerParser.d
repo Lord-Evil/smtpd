@@ -7,7 +7,7 @@ import vibe.utils.dictionarylist;
 import std.exception;
 
 alias InetHeaderMap = DictionaryList!(string, false, 12);
-void parseHeader(InputStream)(InputStream input, ref InetHeaderMap dst, bool initial=false, size_t max_line_length = 1000, IAllocator alloc = vibeThreadAllocator(), bool rfc822_compatible = true)
+void parseHeader(InputStream)(InputStream input, ref InetHeaderMap dst, size_t max_line_length = 1000, IAllocator alloc = vibeThreadAllocator(), bool rfc822_compatible = true)
 	if (isInputStream!InputStream)
 {
 	string hdr, hdrvalue;
@@ -39,8 +39,6 @@ void parseHeader(InputStream)(InputStream input, ref InetHeaderMap dst, bool ini
 			enforce(colonpos > 0, "Header name is empty.");
 			hdr = ln[0..colonpos].stripA();
 			hdrvalue = ln[colonpos+1..$].stripA();
-			if(initial && hdr.toLower=="content-type")
-				break;
 		} else {
 			hdrvalue ~= " " ~ ln.stripA();
 		}

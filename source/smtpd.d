@@ -62,8 +62,8 @@ int main(string[] args){
 				ubyte[1] buf;
 				stream.read(buf);
 				if(buf[0] == '\r')continue;
-				if(buf[0] == '\n')break;
 				line~=buf;
+				if(buf[0] == '\n')break;
 			}
 			if(line.length){
 				session.handleLine(line);
@@ -156,7 +156,7 @@ public:
 		switch(state){
 			case State.Helo:
 				if(line.length>5&&line[0..4].toLower == "helo"){
-					sender = line[5..$];
+					sender = line[5..$].strip;
 					writeln("Sender: "~sender);
 					state = State.From;
 					ok();
@@ -164,7 +164,7 @@ public:
 				}
 				break;
 			case State.From:
-				if(handleFrom(line)){
+				if(handleFrom(line.strip)){
 					writeln("Mail from: "~from);
 					state = State.To;
 					reply(from~" accepted","250");
@@ -172,7 +172,7 @@ public:
 				}
 				break;
 			case State.To:
-				if(handleTo(line)){
+				if(handleTo(line.strip)){
 					writeln("Mail to: "~to);
 					state = State.Data;
 					reply(to~"@"~serverHost~" ok","250");
@@ -188,14 +188,14 @@ public:
 				}
 				break;
 			case State.ReadData:
-				if(line == "."){
+				if(line.strip == "."){
 					state = State.End;
 					reply("Accepted","250");
 					reply("Bye!","221");
 					_s.close();
 					return;
 				}
-				mailBody~=line~'\n';
+				mailBody~=line;
 				return;
 			default:break;
 		}

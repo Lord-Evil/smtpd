@@ -10,11 +10,9 @@ import headerParser;
 
 Json parseMail(string email)
 {
-	email=email.replace('\r',"");
-	writeln("\n----------\n"~email~"\n----------\n");
 	ubyte[] hdr = cast(ubyte[])email.dup;
 	InetHeaderMap map;
-	parseHeader(createMemoryStream(hdr), map, true);
+	parseHeader(createMemoryStream(hdr), map);
 	Json result = Json.emptyObject;
 	Json headers = Json.emptyObject;
 
@@ -39,7 +37,7 @@ Json parseMail(string email)
 	//writeln(headers);
 	if(headers["content-type"].type!=Json.Type.undefined){
 		if(headers["content-type"]["type"]=="text/plain"){
-			string body = parseBody(email, true);
+			string body = parseBody(email);
 			result["body"]=body;
 			if(headers["content-transfer-encoding"].type!=Json.Type.undefined){
 				result["body"] = decodeBody(body, headers["content-transfer-encoding"].get!string);
@@ -124,24 +122,18 @@ Json parseContentType(string val){
 	return contentType;
 }
 
-string parseBody(string data, bool text=false){
-	if(!text){
-		bool newLine = false;
-		for(int i; i<data.length; i++){
-			if(data[i]=='\n'){
-				if(newLine){
-					return data[i..$].strip;
-				}else{
-					newLine = true;
-				}
+string parseBody(string data){
+	bool newLine = false;
+	for(int i; i<data.length; i++){
+		if(data[i]=='\n'){
+			if(newLine){
+				return data[i..$].strip;
 			}else{
-				newLine = false;
+				newLine = true;
 			}
+		}else{
+			newLine = false;
 		}
-	}else{
-		long idx = data.indexOf("Content-Type");
-		idx = data.indexOf("\n", idx);
-		return data[idx+1..$].strip;
 	}
 	return "";
 }
