@@ -96,7 +96,9 @@ Json parseMail(string email)
 			writeln("Unknown Content-Type: ", headers["content-type"]);
 		}
 	}else{
-		writeln("Message contains no body");
+		result["body"]=parseBody(email);
+		if(!result["body"].length)
+			writeln("Message contains no body");
 	}
 	return result;
 }

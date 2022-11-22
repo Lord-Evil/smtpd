@@ -4,7 +4,7 @@
 	],
 	"copyright": "Copyright © 2021, Lord_Evil",
 	"dependencies": {
-		"vibe-d": "~>0.9.3"
+		"vibe-d": "~>0.9.5"
 	},
 	"description": "Simple SMTP serrver that could forward mail to the webhooks",
 	"license": "GPL-3",

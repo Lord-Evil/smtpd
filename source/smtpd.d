@@ -34,6 +34,10 @@ void shutDown(int i){
 }
 
 int main(string[] args){
+	if(args.length>1 && args[1]=="-t"){
+		parseMail("subject: hello\n\nhi").writeln;
+		return 0;
+	}
 	Json config = parseJsonString(cast(string)std.file.read("config.json"));
 	serverHost = config["host"].get!string;
 	forwardTo = config["forward"].get!string;
