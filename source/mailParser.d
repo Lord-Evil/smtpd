@@ -30,7 +30,7 @@ Json parseMail(string email)
 		}else if(key=="content-type"){
 			headers[key]=parseContentType(val);
 		}else{
-			headers[key]=val;
+			headers[key]=decodeWords(val);
 		}
 	}
 	result["headers"]=headers;
@@ -123,7 +123,7 @@ Json parseContentType(string val){
         long eqIdx = parts[i].indexOf("=");
 		string key = parts[i][0..eqIdx];
         string pval = parts[i][eqIdx+1..$];
-		contentType[key]=pval;
+		contentType[key]=decodeWords(pval);
 	}
 	return contentType;
 }
