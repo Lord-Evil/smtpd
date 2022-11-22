@@ -49,6 +49,8 @@ Json parseMail(string email)
 				result["body"]=Json.emptyArray;
 				result["inlines"]=Json.emptyArray;
 				result["attachments"]=Json.emptyArray;
+				//writeln(email);
+				//writeln("Boundary: '"~headers["content-type"]["boundary"].get!string~"'");
 				string[] contentParts = parseMultipart(email, headers["content-type"]["boundary"].get!string);
 				//writeln(contentParts);
 				for(int i=0; i<contentParts.length; i++){
@@ -117,9 +119,11 @@ Json parseContentType(string val){
 	string[] parts = val.split(';');
 	contentType["type"]=parts[0].strip();
 	for(int i=1;i<parts.length;i++){
-		string[] part = parts[i].strip().split('=');
-		part[1]=part[1].replace('"',"");
-		contentType[part[0]]=part[1];
+        parts[i] = parts[i].replace('"',"").strip();
+        long eqIdx = parts[i].indexOf("=");
+		string key = parts[i][0..eqIdx];
+        string pval = parts[i][eqIdx+1..$];
+		contentType[key]=pval;
 	}
 	return contentType;
 }
@@ -145,10 +149,14 @@ string[] parseMultipart(string data, string boundary){
 	string[] parts;
 	long idx=0;
 	while(true){
-		long start = data.indexOf("--"~boundary, idx);
-		long end = data.indexOf("--"~boundary, start+boundary.length);
+		long start = data.indexOf("--"~boundary, idx)+boundary.length+3;
+		long end = data.indexOf("--"~boundary, start);
 		if(end<0) return parts;
 		idx=end;
-		parts~=data[start+boundary.length+3..end];
+		if(end<start){
+			writeln("Bad data:", start, end);
+			data.writeln;
+		}
+		parts~=data[start..end];
 	}
 }

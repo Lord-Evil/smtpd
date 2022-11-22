@@ -35,7 +35,7 @@ void parseHeader(InputStream)(InputStream input, ref InetHeaderMap dst, size_t m
 			addPreviousHeader();
 
 			auto colonpos = ln.indexOf(':');
-			enforce(colonpos >= 0, "Header is missing ':'.");
+			enforce(colonpos >= 0, "Header is missing ':'. '"~ln~"'");
 			enforce(colonpos > 0, "Header name is empty.");
 			hdr = ln[0..colonpos].stripA();
 			hdrvalue = ln[colonpos+1..$].stripA();

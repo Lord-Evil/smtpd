@@ -2,6 +2,8 @@ import std.stdio;
 import std.conv:to, parse;
 import std.string;
 import std.functional;
+import std.algorithm;
+import std.digest: toHexString;
 import core.time;
 
 import vibe.data.json;
@@ -12,6 +14,7 @@ static import std.file;
 import mailParser: parseMail;
 
 protected string serverHost;
+protected string[] serverHosts;
 protected string forwardTo;
 TCPListener listener;
 TCPConnection[] sessions;
@@ -39,7 +42,8 @@ int main(string[] args){
 		return 0;
 	}
 	Json config = parseJsonString(cast(string)std.file.read("config.json"));
-	serverHost = config["host"].get!string;
+	serverHosts = (config["host"].get!string).split(";");
+	serverHost = serverHosts[0];
 	forwardTo = config["forward"].get!string;
 
 	disableDefaultSignalHandlers();
@@ -56,7 +60,8 @@ int main(string[] args){
 }
 @trusted nothrow void handleConn(TCPConnection stream){
 	try{
-		writeln("Incomming connection from "~stream.remoteAddress.to!string);
+		string peedAddress = stream.remoteAddress.to!string;
+		writeln("Incomming connection from "~peedAddress);
 		sessions~=stream;
 		SmtpSession session = new SmtpSession(stream);
 		while(stream.connected){
@@ -90,7 +95,7 @@ int main(string[] args){
 		}
 		sessions.removeFromArray(stream);
 		stream.close();
-		writeln("Peer disconnected "~stream.remoteAddress.to!string);
+		writeln("Peer disconnected "~peedAddress);
 	}catch(Exception){
 		assert("Something went wrong!");
 	}
@@ -142,7 +147,7 @@ private:
 				if(mt.length == 2&&mt[0].length>0&&mt[1].length>0){
 					if(mt[1][mt[1].length-1] == '>')mt[1]=mt[1][0..$-1];
 					if(mt[0][0] == '<')mt[0]=mt[0][1..$];
-					if(mt[1] == serverHost){
+					if(!serverHosts.find(mt[1]).empty){
 						to = mt[0].strip();
 						return true;
 					}
@@ -159,7 +164,7 @@ public:
 	void handleLine(string line){
 		switch(state){
 			case State.Helo:
-				if(line.length>5&&line[0..4].toLower == "helo"){
+				if(line.length>5&&(line[0..4].toLower == "helo" || line[0..4].toLower == "ehlo")){
 					sender = line[5..$].strip;
 					writeln("Sender: "~sender);
 					state = State.From;
@@ -203,11 +208,18 @@ public:
 				return;
 			default:break;
 		}
-		if(line.toLower == "quit"||line.toLower == "bye"){
-			_s.close();
-			return;
+		if(state != State.ReadData){
+			if(line.toLower == "quit\n"||line.toLower == "bye\n"){
+				_s.close();
+				return;
+			}else if(line.toLower == "rset\n"){
+				if(state != State.Helo)
+					state = State.From;
+				ok();
+				return;
+			}
 		}
-		writeln("Did not understand: "~line);
+		writeln("Did not understand: '"~line~"'");
 		bad();
 	}
 	Json container(){
